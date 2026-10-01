@@ -8,14 +8,11 @@
 #include <vector>
 #include <syncstream>
 
-std::mutex coutMutex;
-
 void Worker(const int index)
 {
 	const std::string message =
 		"Поток № " + std::to_string(index) + " выполняет свою работу\n";
 
-	std::lock_guard lock(coutMutex);
 	std::cout << message;
 }
 
