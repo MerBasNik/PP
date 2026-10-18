@@ -1,0 +1,1 @@
+add_executable(lw2 main.cpp)
