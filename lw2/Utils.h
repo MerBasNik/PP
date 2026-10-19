@@ -18,11 +18,11 @@
 #include <vector>
 
 constexpr int MAX_THREADS = 16;
-const int COUNT_LINES = 4;
+const int MAX_CHANNELS = 4;
 
 void BlurPixel(const Image& src, Image& dst, const int x, const int y, const int radius)
 {
-	int sums[COUNT_LINES] = {};
+	int sums[MAX_CHANNELS] = {};
 
 	for (int dy = -radius; dy <= radius; ++dy)
 	{
@@ -88,7 +88,7 @@ std::vector<std::vector<Rect>> MakeWork(const int width, const int height, const
 void WriteResult(const Args& args, const std::chrono::milliseconds workTime)
 {
 	std::cout << args.threads << ',' << args.radius << ',' << std::thread::hardware_concurrency()
-		<< ',' << std::fixed << std::setprecision(3) << workTime.count() << std::endl;
+		<< ',' << workTime.count() << std::endl;
 }
 
 void Run(const Args& args)
@@ -99,11 +99,13 @@ void Run(const Args& args)
 	auto work = MakeWork(src.width, src.height, args.threads);
 	const auto start = std::chrono::steady_clock::now();
 
-	std::vector<std::jthread> threads;
-	threads.reserve(args.threads);
-	for (int k = 0; k < args.threads; ++k)
 	{
-		threads.emplace_back(Worker, std::cref(src), std::ref(dst), std::move(work[k]), args.radius);
+		std::vector<std::jthread> threads;
+		threads.reserve(args.threads);
+		for (int k = 0; k < args.threads; ++k)
+		{
+			threads.emplace_back(Worker, std::cref(src), std::ref(dst), std::move(work[k]), args.radius);
+		}
 	}
 
 	const auto finish = std::chrono::steady_clock::now();

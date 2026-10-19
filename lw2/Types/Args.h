@@ -11,7 +11,7 @@ struct Args
 	std::string input;
 	std::string output;
 	int threads = 0;
-	int radius = 0;
+	int radius = 1;
 };
 
 #endif //PP_ARGS_H
