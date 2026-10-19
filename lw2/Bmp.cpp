@@ -16,7 +16,7 @@ Image Bmp::ReadBmp(const std::string& path)
 	int width = 0;
 	int height = 0;
 	int channels = 0;
-	stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, 0);
+	auto* pixels = stbi_load(path.c_str(), &width, &height, &channels, 0);
 	if (!pixels)
 	{
 		throw std::runtime_error("не удалось прочитать " + path + ": " + stbi_failure_reason());

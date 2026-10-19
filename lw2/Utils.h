@@ -17,7 +17,6 @@
 #include <thread>
 #include <vector>
 
-constexpr int MAX_THREADS = 16;
 const int MAX_CHANNELS = 4;
 
 void BlurPixel(const Image& src, Image& dst, const int x, const int y, const int radius)
@@ -60,7 +59,7 @@ void BlurRect(const Image& src, Image& dst, const Rect rect, const int radius)
 	}
 }
 
-void Worker(const Image& src, Image& dst, const std::vector<Rect> rects, const int radius)
+void Worker(const Image& src, Image& dst, const std::vector<Rect>& rects, const int radius)
 {
 	for (const Rect& rc : rects)
 	{
@@ -119,7 +118,7 @@ Args ParseArgs(const int argc, char* argv[])
 {
 	if (argc != 4 && argc != 5)
 	{
-		throw std::invalid_argument("blur <input.bmp> <output.bmp> <threads> [radius]");
+		throw std::invalid_argument("blur <input.bmp> <output.bmp> <threads> <radius>");
 	}
 
 	Args args;
@@ -127,9 +126,9 @@ Args ParseArgs(const int argc, char* argv[])
 	args.output = argv[2];
 
 	const int threads = std::stoi(argv[3]);
-	if (threads < 1 || threads > MAX_THREADS)
+	if (threads < MIN_THREADS || threads > MAX_THREADS)
 	{
-		throw std::invalid_argument(std::format("Число потоков должно быть от 1 до {}", MAX_THREADS));
+		throw std::invalid_argument(std::format("Число потоков должно быть от {} до {}", MIN_THREADS, MAX_THREADS));
 	}
 	args.threads = threads;
 
