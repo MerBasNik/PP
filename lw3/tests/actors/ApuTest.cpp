@@ -12,63 +12,50 @@ class ApuTest : public ::testing::Test
 protected:
 	void SetUp() override
 	{
-		m_bank = new Bank(1000000);
-		m_apu = new Apu(1000);
-		m_mrBurns = new MrBurns(5000);
+		m_apu.SetAccountId(m_bank.OpenAccount());
+		m_mrBurns.SetAccountId(m_bank.OpenAccount());
+		m_apu.SetMrBurns(&m_mrBurns);
 
-		const AccountId apuId = m_bank->OpenAccount();
-		const AccountId burnsId = m_bank->OpenAccount();
-
-		m_apu->SetAccountId(apuId);
-		m_mrBurns->SetAccountId(burnsId);
-
-		m_apu->SetMrBurns(m_mrBurns);
-		m_apu->AddCash(1000);
-		m_bank->DepositMoney(apuId, 1000);
+		m_bank.DepositMoney(*m_apu.GetAccountId(), 1000);
+		m_bank.WithdrawMoney(*m_apu.GetAccountId(), 1000);
+		m_apu.GetWallet().Add(1000);
 	}
 
-	void TearDown() override
-	{
-		delete m_bank;
-		delete m_apu;
-		delete m_mrBurns;
-	}
-
-	Bank* m_bank = nullptr;
-	Apu* m_apu = nullptr;
-	MrBurns* m_mrBurns = nullptr;
+	Bank m_bank{ 1000000 };
+	Apu m_apu{ 1000 };
+	MrBurns m_mrBurns{ 5000 };
 };
 
-TEST_F(ApuTest, DepositCash)
+TEST_F(ApuTest, DepositRevenue)
 {
-	const Money initialBankCash = m_bank->GetCash();
-	const Money initialApuCash = m_apu->GetCash();
-	const AccountId apuId = m_apu->GetAccountId().value();
-	const Money initialBalance = m_bank->GetAccountBalance(apuId);
-	m_apu->DoAction(*m_bank);
-	const Money finishBankCash = m_bank->GetCash();
-	EXPECT_EQ(m_apu->GetCash(), 0);
-	EXPECT_EQ(m_bank->GetAccountBalance(apuId), initialBalance + initialApuCash - 1000);
-	EXPECT_EQ(initialBankCash - initialApuCash, finishBankCash);
+	const Money initialBankCash = m_bank.GetCash();
+	m_apu.DepositRevenue(m_bank);
+	EXPECT_EQ(m_apu.GetCash(), 0);
+	EXPECT_EQ(m_bank.GetAccountBalance(*m_apu.GetAccountId()), 1000);
+	EXPECT_EQ(m_bank.GetCash(), initialBankCash - 1000);
+}
+
+TEST_F(ApuTest, DepositWithoutRevenue)
+{
+	m_apu.DepositRevenue(m_bank);
+	const auto operationsBefore = m_bank.GetOperationsCount();
+	m_apu.DepositRevenue(m_bank);
+	EXPECT_EQ(m_bank.GetOperationsCount(), operationsBefore);
+	EXPECT_EQ(m_bank.GetAccountBalance(*m_apu.GetAccountId()), 1000);
 }
 
 TEST_F(ApuTest, PayElectricityBill)
 {
-	const AccountId apuId = m_apu->GetAccountId().value();
-	const AccountId mrBurnsId = m_mrBurns->GetAccountId().value();
-	const Money cash = m_apu->GetCash();
-	const Money initialApuBalance = m_bank->GetAccountBalance(apuId);
-	const Money initialMrBurnsBalance = m_bank->GetAccountBalance(mrBurnsId);
-	m_apu->DoAction(*m_bank);
-	EXPECT_EQ(m_bank->GetAccountBalance(apuId), initialApuBalance - 1000 + cash);
-	EXPECT_EQ(m_bank->GetAccountBalance(mrBurnsId), initialMrBurnsBalance + 1000);
+	m_apu.DoAction(m_bank);
+	EXPECT_EQ(m_bank.GetAccountBalance(*m_apu.GetAccountId()), 0);
+	EXPECT_EQ(m_bank.GetAccountBalance(*m_mrBurns.GetAccountId()), 1000);
+	EXPECT_EQ(m_apu.GetCash(), 0);
 }
 
-TEST_F(ApuTest, DidtPayElectricity)
+TEST_F(ApuTest, DidntPayElectricity)
 {
-	const AccountId apuId = m_apu->GetAccountId().value();
-	const AccountId mrBurnsId = m_mrBurns->GetAccountId().value();
-	m_bank->SendMoney(apuId, mrBurnsId, 500);
-	m_apu->DoAction(*m_bank);
-	EXPECT_EQ(m_bank->GetAccountBalance(mrBurnsId), 1500);
+	ASSERT_TRUE(m_apu.GetWallet().TrySpend(500));
+	m_apu.DoAction(m_bank);
+	EXPECT_EQ(m_bank.GetAccountBalance(*m_apu.GetAccountId()), 500);
+	EXPECT_EQ(m_bank.GetAccountBalance(*m_mrBurns.GetAccountId()), 0);
 }

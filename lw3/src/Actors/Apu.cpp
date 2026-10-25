@@ -3,7 +3,6 @@
 //
 
 #include "Apu.h"
-#include <iostream>
 
 Apu::Apu(const Money electricityBill)
 	: Actor("Apu")
@@ -18,53 +17,37 @@ void Apu::SetMrBurns(Actor* mrBurns)
 
 void Apu::DoAction(Bank& bank)
 {
-	DepositMoney(bank);
+	DepositRevenue(bank);
 	PayElectricityBill(bank);
 }
 
-void Apu::DepositMoney(Bank& bank)
+void Apu::DepositRevenue(Bank& bank)
 {
-	const Money apuCash = GetCash();
 	const auto apuAccountId = GetAccountId();
-	if (apuCash > 0 && apuAccountId.has_value())
+	const Money revenue = GetCash();
+	if (apuAccountId.has_value() && revenue > 0 && DepositFromWallet(bank, *apuAccountId, revenue))
 	{
-		try
-		{
-			if (RemoveCash(apuCash))
-			{
-				bank.DepositMoney(*apuAccountId, apuCash);
-				std::cout << GetName() << ": successfully deposit money" << std::endl;
-			}
-			else
-			{
-				std::cout << GetName() << ": didn't deposit money" << std::endl;
-			}
-		}
-		catch (const std::exception& e)
-		{
-			std::cout << GetName() << ": " << e.what() << std::endl;
-		}
+		Log("deposited revenue {}", revenue);
 	}
 	else
 	{
-		std::cout << GetName() << ": didn't deposit money" << std::endl;
+		Log("skips turn: no revenue to deposit");
 	}
 }
 
-void Apu::PayElectricityBill(Bank& bank) const
+void Apu::PayElectricityBill(Bank& bank)
 {
-	const auto apuAccountId = GetAccountId();
-	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
-	if (mrBurnsAccountId.has_value())
+	if (!m_mrBurns)
 	{
-		try
-		{
-			bank.SendMoney(*apuAccountId, *mrBurnsAccountId, m_electricityBill);
-			std::cout << GetName() << ": successfully pay electricity bill" << std::endl;
-		}
-		catch (const std::exception& e)
-		{
-			std::cout << GetName() << ": " << e.what() << std::endl;
-		}
+		return;
+	}
+	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
+	if (mrBurnsAccountId.has_value() && PayFromAccount(bank, *mrBurnsAccountId, m_electricityBill))
+	{
+		Log("paid electricity bill {}", m_electricityBill);
+	}
+	else
+	{
+		Log("skips turn: can't pay electricity bill {}", m_electricityBill);
 	}
 }

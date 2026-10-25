@@ -4,41 +4,39 @@
 
 #ifndef ECONOMY_ECONOMY_H
 #define ECONOMY_ECONOMY_H
-#include "../Actors/Actor.h"
+#include "src/Actors/Actor.h"
+#include "src/Args/Args.h"
+#include "src/Bank/Bank.h"
+#include "src/Logger/Logger.h"
+#include <atomic>
+#include <chrono>
+#include <memory>
 #include <vector>
 
 class Economy
 {
 public:
-	explicit Economy(int iterations);
+	static constexpr Money INITIAL_BALANCE = 10000;
+
+	explicit Economy(bool quiet = true);
 	Economy(const Economy&) = delete;
 	Economy& operator=(const Economy&) = delete;
-	~Economy();
-
-	void AddActor(Actor* actor);
-	void SetBank(Bank* bank);
-
-	void StartEconomy() const;
+	void Run(Mode mode, std::chrono::milliseconds duration, const std::atomic<bool>& stopRequested);
 	void PrintResult() const;
-	void VerifyConsistency() const;
-	void CreateActors();
-
-	[[nodiscard]] Bank* GetBank() const;
-	[[nodiscard]] std::vector<Actor*>& GetActors();
+	void VerifyState() const;
+	[[nodiscard]] unsigned long long GetRunOperationsCount() const;
+	[[nodiscard]] std::chrono::duration<double> GetRunDuration() const;
 
 private:
-	const Money INITIAL_BALANCE = 9000;
-	const int COUNT_ACTORS = 9;
-	int m_iterations;
-	Money m_initialBalance;
-	Bank* m_bank;
-	std::vector<Actor*> m_actors;
+	Bank m_bank{ INITIAL_BALANCE };
+	Logger m_logger;
+	std::vector<std::unique_ptr<Actor>> m_actors;
 
-	void InitActorsAccount(const std::vector<Actor*>& actors, Money initMoney);
+	unsigned long long m_runOperationsCount = 0;
+	std::chrono::duration<double> m_runDuration{};
+	void CreateActors(bool quiet);
 	[[nodiscard]] Money GetAllCashActorsMoney() const;
-	[[nodiscard]] Money GetAllCashBankMoney() const;
 	[[nodiscard]] Money GetAllAccountBalanceMoney() const;
-	[[nodiscard]] Money GetAllMoney() const;
 };
 
 #endif // ECONOMY_ECONOMY_H

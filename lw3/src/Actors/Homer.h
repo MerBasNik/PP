@@ -16,6 +16,10 @@ public:
 	void SetLisa(Actor* lisa);
 	void SetMrBurns(Actor* mrBurns);
 
+	void PayElectricityBill(Bank& bank);
+	void WithdrawFamilyCash(Bank& bank);
+	void GiveMoneyToFamily();
+
 private:
 	Money m_moneyForChildren;
 	Money m_electricityBill;
@@ -26,9 +30,7 @@ private:
 	Actor* m_lisa = nullptr;
 	Actor* m_mrBurns = nullptr;
 
-	void PayElectricityBill(Bank& bank) const;
-	void SendMargeMoney(Bank& bank) const;
-	void GetChildrenMoney(Bank& bank) const;
+	void GiveMoneyTo(Actor* recipient, Money amount);
 };
 
 #endif // ECONOMY_HOMER_H

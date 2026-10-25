@@ -5,19 +5,18 @@
 #ifndef ECONOMY_MRBURNS_H
 #define ECONOMY_MRBURNS_H
 #include "Actor.h"
-
-#include <unordered_set>
+#include <vector>
 
 class MrBurns : public Actor
 {
 public:
-	MrBurns(Money salary);
+	explicit MrBurns(Money salary);
 	void DoAction(Bank& bank) override;
 	void AddEmployee(Actor* employee);
 
 private:
 	Money m_salary;
-	std::unordered_set<Actor*> m_employee;
+	std::vector<Actor*> m_employees;
 };
 
 #endif // ECONOMY_MRBURNS_H

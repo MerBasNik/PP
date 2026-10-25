@@ -1,36 +1,35 @@
+#include "src/Args/Args.h"
 #include "src/Economy/Economy.h"
+#include <atomic>
+#include <chrono>
+#include <csignal>
 #include <exception>
 #include <iostream>
 
-constexpr int COUNT_ARGS_FROM_PARAMS = 2;
-int StartSimulationEconomy(int argc, const char* argv[]);
+static_assert(std::atomic<bool>::is_always_lock_free, "the flag is written from a signal handler");
+static std::atomic<bool> g_stopRequested = false;
+
+static void OnSigInt(int)
+{
+	g_stopRequested = true;
+}
 
 int main(const int argc, const char* argv[])
 {
-	return StartSimulationEconomy(argc, argv);
-}
-
-int StartSimulationEconomy(const int argc, const char* argv[])
-{
 	try
 	{
-		std::istream& input = std::cin;
-		int iterations = 0;
-		if (argc == COUNT_ARGS_FROM_PARAMS)
-		{
-			iterations = std::stoi(argv[1]);
-		}
-		else
-		{
-			input >> iterations;
-		}
-		const Economy economy(iterations);
-		economy.StartEconomy();
+		const Args args = ParseArgs(argc, argv);
+		std::signal(SIGINT, OnSigInt);
+
+		Economy economy(args.quiet);
+		economy.Run(args.mode, std::chrono::seconds(args.seconds), g_stopRequested);
+		economy.PrintResult();
+		economy.VerifyState();
+		return 0;
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
 	{
 		std::cout << "ERROR: " << e.what() << std::endl;
 		return 1;
 	}
-	return 0;
 }

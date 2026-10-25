@@ -4,18 +4,12 @@
 
 #ifndef ECONOMY_LISA_H
 #define ECONOMY_LISA_H
-#include "Actor.h"
+#include "Customer.h"
 
-class Lisa : public Actor
+class Lisa : public Customer
 {
 public:
-	Lisa(Money initMoney, Money purchase);
-	void DoAction(Bank& bank) override;
-	void SetApu(Actor* apu);
-
-private:
-	Money m_purchase;
-	Actor* m_apu = nullptr;
+	explicit Lisa(Money purchase);
 };
 
 #endif // ECONOMY_LISA_H

@@ -4,156 +4,126 @@
 
 #include "Bank.h"
 #include "BankOperationError.h"
+#include <stdexcept>
+#include <string>
 
-#include <iostream>
+static void ThrowIfNegative(const Money amount)
+{
+	if (amount < 0)
+	{
+		throw std::out_of_range("amount is negative");
+	}
+}
 
 Bank::Bank(const Money cash)
+	: m_cash(cash)
 {
-	if (cash < 0)
-	{
-		throw BankOperationError("Cash cannot be negative");
-	}
-	m_cash = cash;
+	ThrowIfNegative(cash);
 }
 
 AccountId Bank::OpenAccount()
 {
-	AccountId accountId = m_currentAccountId++;
+	CountOperation();
+	std::lock_guard lock(m_mutex);
+
+	const AccountId accountId = m_nextAccountId;
 	m_accountBalances.emplace(accountId, 0);
+	++m_nextAccountId;
 	return accountId;
 }
 
-Money Bank::CloseAccount(const AccountId accountId)
+Money Bank::CloseAccount(const AccountId account)
 {
-	const Money money = GetAccountBalance(accountId);
-	m_cash += money;
-	m_accountBalances.erase(accountId);
-	return money;
+	CountOperation();
+	std::lock_guard lock(m_mutex);
+
+	const Money balance = GetBalanceRef(account);
+	m_accountBalances.erase(account);
+	m_cash += balance;
+	return balance;
 }
 
-void Bank::DepositMoney(const AccountId accountId, const Money amount)
+void Bank::DepositMoney(const AccountId account, const Money amount)
 {
+	CountOperation();
+	ThrowIfNegative(amount);
+	std::lock_guard lock(m_mutex);
+
+	Money& balance = GetBalanceRef(account);
 	if (m_cash < amount)
+	{
+		throw BankOperationError("not enough cash to deposit");
+	}
+	m_cash -= amount;
+	balance += amount;
+}
+
+void Bank::WithdrawMoney(const AccountId account, const Money amount)
+{
+	CountOperation();
+	ThrowIfNegative(amount);
+	std::lock_guard lock(m_mutex);
+
+	Money& balance = GetBalanceRef(account);
+	if (balance < amount)
 	{
 		throw BankOperationError("amount greater than account balance");
 	}
-	if (amount < 0)
-	{
-		throw std::out_of_range("amount is negative");
-	}
-	Money& money = GetPointerToAccountBalance(accountId);
-	m_cash -= amount;
-	money += amount;
+	balance -= amount;
+	m_cash += amount;
 }
 
-void Bank::WithdrawMoney(const AccountId accountId, const Money amount)
+bool Bank::TryWithdrawMoney(const AccountId account, const Money amount)
 {
-	const bool isWithdraw = TryWithdrawMoney(accountId, amount);
-	if (!isWithdraw)
-	{
-		throw BankOperationError("Amount greater than account balance");
-	}
-}
+	CountOperation();
+	ThrowIfNegative(amount);
+	std::lock_guard lock(m_mutex);
 
-bool Bank::TryWithdrawMoney(const AccountId accountId, const Money amount)
-{
-	Money& money = GetPointerToAccountBalance(accountId);
-	if (money < amount)
+	Money& balance = GetBalanceRef(account);
+	if (balance < amount)
 	{
 		return false;
 	}
-	if (amount < 0)
-	{
-		throw std::out_of_range("amount is negative");
-	}
-	money -= amount;
+	balance -= amount;
 	m_cash += amount;
 	return true;
 }
 
-Money Bank::GetAccountBalance(const AccountId accountId) const
+Money Bank::GetAccountBalance(const AccountId account) const
 {
-	const auto account = m_accountBalances.find(accountId);
-	if (account == m_accountBalances.end())
-	{
-		throw BankOperationError("account not found");
-	}
-	const Money money = account->second;
-	return money;
-}
-
-Money& Bank::GetPointerToAccountBalance(const AccountId accountId)
-{
-	const auto account = m_accountBalances.find(accountId);
-	if (account == m_accountBalances.end())
-	{
-		throw BankOperationError("account not found");
-	}
-	return account->second;
+	CountOperation();
+	std::lock_guard lock(m_mutex);
+	return GetBalanceRef(account);
 }
 
 Money Bank::GetCash() const
 {
+	CountOperation();
+	std::lock_guard lock(m_mutex);
 	return m_cash;
 }
 
-// void Bank::SendMoney(const AccountId srcAccountId, const AccountId dstAccountId, const Money amount)
-// {
-// 	Money& srcMoney = GetPointerToAccountBalance(srcAccountId);
-// 	Money& dstMoney = GetPointerToAccountBalance(dstAccountId);
-// 	if (srcMoney < amount)
-// 	{
-// 		throw BankOperationError("Amount greater than account balance");
-// 	}
-// 	if (amount < 0)
-// 	{
-// 		throw std::out_of_range("amount greater than account balance");
-// 	}
-// 	srcMoney -= amount;
-// 	dstMoney += amount;
-// }
-//
-// bool Bank::TrySendMoney(const AccountId srcAccountId, const AccountId dstAccountId, const Money amount)
-// {
-// 	try
-// 	{
-// 		SendMoney(srcAccountId, dstAccountId, amount);
-// 		return true;
-// 	}
-// 	catch (const std::out_of_range& e)
-// 	{
-// 		std::cout << e.what() << std::endl;
-// 		return false;
-// 	}
-// 	catch (const BankOperationError& e)
-// 	{
-// 		std::cout << e.what() << std::endl;
-// 		return false;
-// 	}
-// }
-
-bool Bank::TrySendMoney(const AccountId srcAccountId, const AccountId dstAccountId, const Money amount)
+unsigned long long Bank::GetOperationsCount() const
 {
-	Money& srcMoney = GetPointerToAccountBalance(srcAccountId);
-	Money& dstMoney = GetPointerToAccountBalance(dstAccountId);
-	if (srcMoney < amount)
-	{
-		return false;
-	}
-	if (amount < 0)
-	{
-		throw std::out_of_range("amount greater than account balance");
-	}
-	srcMoney -= amount;
-	dstMoney += amount;
-	return true;
+	return m_operationsCount.load();
 }
 
-void Bank::SendMoney(const AccountId srcAccountId, const AccountId dstAccountId, const Money amount)
+Money& Bank::GetBalanceRef(const AccountId account)
 {
-	const bool isSend = TrySendMoney(srcAccountId, dstAccountId, amount);
-	if (!isSend)
+	const auto it = m_accountBalances.find(account);
+	if (it == m_accountBalances.end())
 	{
-		throw BankOperationError("Amount greater than account balance");
+		throw BankOperationError("account " + std::to_string(account) + " not found");
 	}
+	return it->second;
+}
+
+const Money& Bank::GetBalanceRef(const AccountId account) const
+{
+	return const_cast<Bank*>(this)->GetBalanceRef(account);
+}
+
+void Bank::CountOperation() const
+{
+	++m_operationsCount;
 }

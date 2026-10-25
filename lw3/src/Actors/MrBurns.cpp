@@ -3,7 +3,6 @@
 //
 
 #include "MrBurns.h"
-#include <iostream>
 
 MrBurns::MrBurns(const Money salary)
 	: Actor("MrBurns")
@@ -13,30 +12,21 @@ MrBurns::MrBurns(const Money salary)
 
 void MrBurns::AddEmployee(Actor* employee)
 {
-	m_employee.emplace(employee);
+	m_employees.push_back(employee);
 }
 
 void MrBurns::DoAction(Bank& bank)
 {
-	const auto mrBurnsAccountId = GetAccountId();
-	for (const auto& employee : m_employee)
+	for (Actor* employee : m_employees)
 	{
 		const auto employeeAccountId = employee->GetAccountId();
-		if (mrBurnsAccountId.has_value() && employeeAccountId.has_value())
+		if (employeeAccountId.has_value() && PayFromAccount(bank, *employeeAccountId, m_salary))
 		{
-			try
-			{
-				bank.SendMoney(*mrBurnsAccountId, *employeeAccountId, m_salary);
-				std::cout << GetName() << ": pay salary for " << employee->GetName() << std::endl;
-			}
-			catch (const std::exception& e)
-			{
-				std::cout << GetName() << ": " << e.what() << std::endl;
-			}
+			Log("paid salary {} to {}", m_salary, employee->GetName());
 		}
 		else
 		{
-			std::cout << GetName() << ": didn't pay salary for " << employee->GetName() << std::endl;
+			Log("skips turn: can't pay salary {} to {}", m_salary, employee->GetName());
 		}
 	}
 }

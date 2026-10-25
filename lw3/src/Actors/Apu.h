@@ -9,15 +9,16 @@
 class Apu : public Actor
 {
 public:
-	Apu(Money electricityBill);
+	explicit Apu(Money electricityBill);
 	void DoAction(Bank& bank) override;
 	void SetMrBurns(Actor* mrBurns);
+
+	void DepositRevenue(Bank& bank);
+	void PayElectricityBill(Bank& bank);
 
 private:
 	Money m_electricityBill;
 	Actor* m_mrBurns = nullptr;
-	void DepositMoney(Bank& bank);
-	void PayElectricityBill(Bank& bank) const;
 };
 
 #endif // ECONOMY_APU_H

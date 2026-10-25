@@ -4,18 +4,12 @@
 
 #ifndef ECONOMY_BART_H
 #define ECONOMY_BART_H
-#include "Actor.h"
+#include "Customer.h"
 
-class Bart : public Actor
+class Bart : public Customer
 {
 public:
-	Bart(Money initMoney, Money purchase);
-	void DoAction(Bank& bank) override;
-	void SetApu(Actor* apu);
-
-private:
-	Money m_purchase;
-	Actor* m_apu = nullptr;
+	explicit Bart(Money purchase);
 };
 
 #endif // ECONOMY_BART_H

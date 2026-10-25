@@ -9,9 +9,19 @@ Actor::Actor(std::string name)
 {
 }
 
+const std::string& Actor::GetName() const
+{
+	return m_name;
+}
+
 Money Actor::GetCash() const
 {
-	return m_cash;
+	return m_wallet.GetBalance();
+}
+
+Wallet& Actor::GetWallet()
+{
+	return m_wallet;
 }
 
 std::optional<AccountId> Actor::GetAccountId() const
@@ -19,30 +29,51 @@ std::optional<AccountId> Actor::GetAccountId() const
 	return m_accountId;
 }
 
-std::string Actor::GetName() const
-{
-	return m_name;
-}
-
 void Actor::SetAccountId(const AccountId accountId)
 {
 	m_accountId = accountId;
 }
 
-void Actor::AddCash(const Money amount)
+void Actor::SetLogger(Logger* logger)
 {
-	if (amount >= 0)
-	{
-		m_cash += amount;
-	}
+	m_logger = logger;
 }
 
-bool Actor::RemoveCash(const Money amount)
+bool Actor::WithdrawToWallet(Bank& bank, const Money amount)
 {
-	if (m_cash < amount)
+	if (!m_accountId.has_value())
 	{
 		return false;
 	}
-	m_cash -= amount;
+	if (!bank.TryWithdrawMoney(*m_accountId, amount))
+	{
+		return false;
+	}
+	m_wallet.Add(amount);
+	return true;
+}
+
+bool Actor::DepositFromWallet(Bank& bank, const AccountId dst, const Money amount)
+{
+	if (!m_wallet.TrySpend(amount))
+	{
+		return false;
+	}
+	bank.DepositMoney(dst, amount);
+	return true;
+}
+
+bool Actor::PayFromAccount(Bank& bank, const AccountId dst, const Money amount)
+{
+	return WithdrawToWallet(bank, amount) && DepositFromWallet(bank, dst, amount);
+}
+
+bool Actor::GiveCash(Actor& recipient, const Money amount)
+{
+	if (!m_wallet.TrySpend(amount))
+	{
+		return false;
+	}
+	recipient.m_wallet.Add(amount);
 	return true;
 }

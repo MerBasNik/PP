@@ -12,37 +12,30 @@ class BartTest : public ::testing::Test
 protected:
 	void SetUp() override
 	{
-		m_bank = new Bank(1000000);
-		m_bart = new Bart(70, 50);
-		m_apu = new Apu(200);
-		m_bart->SetApu(m_apu);
+		m_bart.SetApu(&m_apu);
+		m_bart.GetWallet().Add(70);
 	}
-	void TearDown() override
-	{
-		delete m_bank;
-		delete m_bart;
-		delete m_apu;
-	}
-	Bank* m_bank = nullptr;
-	Bart* m_bart = nullptr;
-	Apu* m_apu = nullptr;
+
+	Bank m_bank{ 1000000 };
+	Bart m_bart{ 50 };
+	Apu m_apu{ 200 };
 };
 
 TEST_F(BartTest, SpendMoneyAtApu)
 {
-	const Money initialBartCash = m_bart->GetCash();
-	const Money initialApuCash = m_apu->GetCash();
-	m_bart->DoAction(*m_bank);
-	EXPECT_EQ(m_bart->GetCash(), initialBartCash - 50);
-	EXPECT_EQ(m_apu->GetCash(), initialApuCash + 50);
+	const Money initialBartCash = m_bart.GetCash();
+	const Money initialApuCash = m_apu.GetCash();
+	m_bart.DoAction(m_bank);
+	EXPECT_EQ(m_bart.GetCash(), initialBartCash - 50);
+	EXPECT_EQ(m_apu.GetCash(), initialApuCash + 50);
 }
 
 TEST_F(BartTest, NotEnoughMoney)
 {
-	const Money initialBartCash = m_bart->GetCash();
-	const Money initialApuCash = m_apu->GetCash();
-	m_bart->DoAction(*m_bank);
-	m_bart->DoAction(*m_bank);
-	EXPECT_EQ(m_bart->GetCash(), initialBartCash - 50);
-	EXPECT_EQ(m_apu->GetCash(), initialApuCash + 50);
+	const Money initialBartCash = m_bart.GetCash();
+	const Money initialApuCash = m_apu.GetCash();
+	m_bart.DoAction(m_bank);
+	m_bart.DoAction(m_bank);
+	EXPECT_EQ(m_bart.GetCash(), initialBartCash - 50);
+	EXPECT_EQ(m_apu.GetCash(), initialApuCash + 50);
 }

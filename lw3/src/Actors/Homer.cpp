@@ -3,7 +3,6 @@
 //
 
 #include "Homer.h"
-#include <iostream>
 
 Homer::Homer(const Money moneyForMarge,
 	const Money electricityBill, const Money moneyForChildren)
@@ -36,86 +35,60 @@ void Homer::SetMrBurns(Actor* mrBurns)
 
 void Homer::DoAction(Bank& bank)
 {
-	SendMargeMoney(bank);
 	PayElectricityBill(bank);
-	GetChildrenMoney(bank);
+	WithdrawFamilyCash(bank);
+	GiveMoneyToFamily();
 }
 
-void Homer::PayElectricityBill(Bank& bank) const
+void Homer::PayElectricityBill(Bank& bank)
 {
 	if (!m_mrBurns)
 	{
 		return;
 	}
-	const auto homerAccountId = GetAccountId();
 	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
-	if (mrBurnsAccountId.has_value())
+	if (mrBurnsAccountId.has_value() && PayFromAccount(bank, *mrBurnsAccountId, m_electricityBill))
 	{
-		try
-		{
-			bank.SendMoney(*homerAccountId, *mrBurnsAccountId, m_electricityBill);
-			std::cout << GetName() << ": pay electricity bill" << std::endl;
-		}
-		catch (const std::exception& e)
-		{
-			std::cout << GetName() << ": " << e.what() << std::endl;
-		}
+		Log("paid electricity bill {}", m_electricityBill);
 	}
 	else
 	{
-		std::cout << GetName() << ": didn't pay electricity bill" << std::endl;
+		Log("skips turn: can't pay electricity bill {}", m_electricityBill);
 	}
 }
 
-void Homer::SendMargeMoney(Bank& bank) const
+void Homer::WithdrawFamilyCash(Bank& bank)
 {
-	if (!m_marge)
+	const Money amount = m_moneyForMarge + m_moneyForChildren;
+	if (WithdrawToWallet(bank, amount))
 	{
-		return;
-	}
-	const auto homerAccountId = GetAccountId();
-	const auto margeAccountId = m_marge->GetAccountId();
-	if (homerAccountId.has_value() && margeAccountId.has_value())
-	{
-		try
-		{
-			bank.SendMoney(*homerAccountId, *margeAccountId, m_moneyForMarge);
-			std::cout << GetName() << ": sent money to " << m_marge->GetName() << std::endl;
-		}
-		catch (const std::exception& e)
-		{
-			std::cout << GetName() << ": " << e.what() << std::endl;
-		}
+		Log("withdrew {} from account", amount);
 	}
 	else
 	{
-		std::cout << GetName() << ": didn't send money to " << m_marge->GetName() << std::endl;
+		Log("skips turn: not enough money on account to withdraw {}", amount);
 	}
 }
 
-void Homer::GetChildrenMoney(Bank& bank) const
+void Homer::GiveMoneyToFamily()
 {
-	if (!m_bart || !m_lisa)
+	GiveMoneyTo(m_marge, m_moneyForMarge);
+	GiveMoneyTo(m_bart, m_moneyForChildren / 2);
+	GiveMoneyTo(m_lisa, m_moneyForChildren / 2);
+}
+
+void Homer::GiveMoneyTo(Actor* recipient, const Money amount)
+{
+	if (!recipient)
 	{
 		return;
 	}
-	const auto homerAccountId = GetAccountId();
-	if (homerAccountId.has_value())
+	if (GiveCash(*recipient, amount))
 	{
-		try
-		{
-			bank.WithdrawMoney(*homerAccountId, m_moneyForChildren);
-			m_bart->AddCash(m_moneyForChildren / 2);
-			m_lisa->AddCash(m_moneyForChildren / 2);
-			std::cout << GetName() << ": got money for children" << std::endl;
-		}
-		catch (const std::exception& e)
-		{
-			std::cout << GetName() << ": " << e.what() << std::endl;
-		}
+		Log("gave {} to {}", amount, recipient->GetName());
 	}
 	else
 	{
-		std::cout << GetName() << ": didn't get money for children" << std::endl;
+		Log("skips turn: not enough cash to give {} to {}", amount, recipient->GetName());
 	}
 }
