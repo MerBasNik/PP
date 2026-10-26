@@ -21,8 +21,8 @@ void MrBurns::DoAction(Bank& bank)
 {
 	for (Actor* employee : m_employees)
 	{
-		const auto employeeAccountId = employee->GetAccountId();
-		if (employeeAccountId.has_value() && PayFromAccount(bank, *employeeAccountId, m_salary))
+		const auto accountId = employee->GetAccountId();
+		if (accountId.has_value() && PayFromAccount(bank, *accountId, m_salary))
 		{
 			const std::string message = std::format("paid salary {} to {}", m_salary, employee->GetName());
 			Print(message);

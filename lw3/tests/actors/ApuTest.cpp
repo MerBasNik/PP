@@ -25,7 +25,7 @@ protected:
 TEST_F(ApuTest, DepositRevenue)
 {
 	m_apu.GetWallet().Add(1000);
-	m_apu.DepositRevenue(m_bank);
+	m_apu.DepositMoney(m_bank);
 	EXPECT_EQ(m_apu.GetCash(), 0);
 	EXPECT_EQ(m_bank.GetAccountBalance(*m_apu.GetAccountId()), 1000);
 	EXPECT_EQ(m_bank.GetCash(), 0);
@@ -34,7 +34,7 @@ TEST_F(ApuTest, DepositRevenue)
 TEST_F(ApuTest, DepositWithoutRevenue)
 {
 	const auto operationsBefore = m_bank.GetOperationsCount();
-	m_apu.DepositRevenue(m_bank);
+	m_apu.DepositMoney(m_bank);
 	EXPECT_EQ(m_bank.GetOperationsCount(), operationsBefore);
 	EXPECT_EQ(m_bank.GetAccountBalance(*m_apu.GetAccountId()), 0);
 }

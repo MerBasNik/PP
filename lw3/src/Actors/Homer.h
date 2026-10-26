@@ -15,7 +15,6 @@ public:
 	void SetBart(Actor* bart);
 	void SetLisa(Actor* lisa);
 	void SetMrBurns(Actor* mrBurns);
-
 	void PayElectricityBill(Bank& bank);
 	void WithdrawFamilyCash(Bank& bank);
 	void GiveMoneyToFamily();
@@ -24,7 +23,6 @@ private:
 	Money m_moneyForChildren;
 	Money m_electricityBill;
 	Money m_moneyForMarge;
-
 	Actor* m_marge = nullptr;
 	Actor* m_bart = nullptr;
 	Actor* m_lisa = nullptr;

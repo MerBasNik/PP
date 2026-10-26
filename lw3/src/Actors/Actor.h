@@ -12,7 +12,7 @@
 class Actor
 {
 public:
-	explicit Actor(std::string name);
+	explicit Actor(const std::string& name);
 	Actor(const Actor&) = delete;
 	Actor& operator=(const Actor&) = delete;
 	virtual ~Actor() = default;

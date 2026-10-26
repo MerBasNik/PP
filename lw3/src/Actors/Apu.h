@@ -12,8 +12,7 @@ public:
 	explicit Apu(Money electricityBill);
 	void DoAction(Bank& bank) override;
 	void SetMrBurns(Actor* mrBurns);
-
-	void DepositRevenue(Bank& bank);
+	void DepositMoney(Bank& bank);
 	void PayElectricityBill(Bank& bank);
 
 private:

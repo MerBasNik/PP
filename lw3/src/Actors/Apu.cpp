@@ -19,17 +19,17 @@ void Apu::SetMrBurns(Actor* mrBurns)
 
 void Apu::DoAction(Bank& bank)
 {
-	DepositRevenue(bank);
+	DepositMoney(bank);
 	PayElectricityBill(bank);
 }
 
-void Apu::DepositRevenue(Bank& bank)
+void Apu::DepositMoney(Bank& bank)
 {
-	const auto apuAccountId = GetAccountId();
-	const Money revenue = GetCash();
-	if (apuAccountId.has_value() && revenue > 0 && DepositFromWallet(bank, *apuAccountId, revenue))
+	const auto accountId = GetAccountId();
+	const Money money = GetCash();
+	if (accountId.has_value() && money > 0 && DepositFromWallet(bank, *accountId, money))
 	{
-		const std::string message = std::format("deposited revenue {}", revenue);
+		const std::string message = std::format("deposited revenue {}", money);
 		Print(message);
 	}
 	else
@@ -45,8 +45,8 @@ void Apu::PayElectricityBill(Bank& bank)
 	{
 		return;
 	}
-	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
-	if (mrBurnsAccountId.has_value() && PayFromAccount(bank, *mrBurnsAccountId, m_electricityBill))
+	const auto accountId = m_mrBurns->GetAccountId();
+	if (accountId.has_value() && PayFromAccount(bank, *accountId, m_electricityBill))
 	{
 		const std::string message = std::format("paid electricity bill {}", m_electricityBill);
 		Print(message);

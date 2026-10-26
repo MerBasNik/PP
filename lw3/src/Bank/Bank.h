@@ -37,7 +37,7 @@ private:
 	static void VerifyBank(Money amount);
 	Money& GetBalanceRef(AccountId account);
 	const Money& GetBalanceRef(AccountId account) const;
-	void CountOperation() const;
+	void IncrementCountOperation() const;
 };
 
 #endif // ECONOMY_BANK_H

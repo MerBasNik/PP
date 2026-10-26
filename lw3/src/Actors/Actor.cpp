@@ -6,7 +6,7 @@
 #include <iostream>
 #include <mutex>
 
-Actor::Actor(std::string name)
+Actor::Actor(const std::string& name)
 	: m_name(std::move(name))
 {
 }

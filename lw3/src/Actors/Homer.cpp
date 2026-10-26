@@ -48,8 +48,8 @@ void Homer::PayElectricityBill(Bank& bank)
 	{
 		return;
 	}
-	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
-	if (mrBurnsAccountId.has_value() && PayFromAccount(bank, *mrBurnsAccountId, m_electricityBill))
+	const auto accountId = m_mrBurns->GetAccountId();
+	if (accountId.has_value() && PayFromAccount(bank, *accountId, m_electricityBill))
 	{
 		const std::string message = std::format("paid electricity bill {}", m_electricityBill);
 		Print(message);

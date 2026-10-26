@@ -23,7 +23,7 @@ Bank::Bank(const Money cash)
 
 AccountId Bank::OpenAccount()
 {
-	CountOperation();
+	IncrementCountOperation();
 	std::lock_guard lock(m_mutex);
 
 	const AccountId accountId = m_nextAccountId;
@@ -34,7 +34,7 @@ AccountId Bank::OpenAccount()
 
 Money Bank::CloseAccount(const AccountId account)
 {
-	CountOperation();
+	IncrementCountOperation();
 	std::lock_guard lock(m_mutex);
 
 	const Money balance = GetBalanceRef(account);
@@ -45,7 +45,7 @@ Money Bank::CloseAccount(const AccountId account)
 
 void Bank::DepositMoney(const AccountId account, const Money amount)
 {
-	CountOperation();
+	IncrementCountOperation();
 	VerifyBank(amount);
 	std::lock_guard lock(m_mutex);
 
@@ -60,7 +60,7 @@ void Bank::DepositMoney(const AccountId account, const Money amount)
 
 void Bank::WithdrawMoney(const AccountId account, const Money amount)
 {
-	CountOperation();
+	IncrementCountOperation();
 	VerifyBank(amount);
 	std::lock_guard lock(m_mutex);
 
@@ -75,7 +75,7 @@ void Bank::WithdrawMoney(const AccountId account, const Money amount)
 
 bool Bank::TryWithdrawMoney(const AccountId account, const Money amount)
 {
-	CountOperation();
+	IncrementCountOperation();
 	VerifyBank(amount);
 	std::lock_guard lock(m_mutex);
 
@@ -91,14 +91,14 @@ bool Bank::TryWithdrawMoney(const AccountId account, const Money amount)
 
 Money Bank::GetAccountBalance(const AccountId account) const
 {
-	CountOperation();
+	IncrementCountOperation();
 	std::lock_guard lock(m_mutex);
 	return GetBalanceRef(account);
 }
 
 Money Bank::GetCash() const
 {
-	CountOperation();
+	IncrementCountOperation();
 	std::lock_guard lock(m_mutex);
 	return m_cash;
 }
@@ -123,7 +123,7 @@ const Money& Bank::GetBalanceRef(const AccountId account) const
 	return const_cast<Bank*>(this)->GetBalanceRef(account);
 }
 
-void Bank::CountOperation() const
+void Bank::IncrementCountOperation() const
 {
 	++m_operationsCount;
 }

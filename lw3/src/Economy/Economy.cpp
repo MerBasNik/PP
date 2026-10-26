@@ -126,13 +126,15 @@ void Economy::PrintResult() const
 {
 	const double seconds = m_runDuration.count();
 	const Money bankCash = m_bank.GetCash();
+	const auto operationsCount = m_bank.GetOperationsCount();
 	const Money actorsCash = GetAllCashActorsMoney();
 	const Money accountsMoney = GetAllAccountBalanceMoney();
 
 	std::cout << "Duration: " << seconds << std::endl;
+	std::cout << "Operations: " << operationsCount << std::endl;
 	std::cout << "Bank cash: " << bankCash << ", all actors cash: " << actorsCash << std::endl;
 	std::cout << "Bank cash + all account balances: " << bankCash + accountsMoney
-			  << ", initial balance: " << INITIAL_BALANCE << std::endl;
+		<< ", initial balance: " << INITIAL_BALANCE << std::endl;
 }
 
 void Economy::VerifyState() const
