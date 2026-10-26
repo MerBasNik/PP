@@ -7,7 +7,6 @@
 #include "src/Actors/Actor.h"
 #include "src/Args/Args.h"
 #include "src/Bank/Bank.h"
-#include "src/Logger/Logger.h"
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -16,12 +15,13 @@
 class Economy
 {
 public:
+	using Clock = std::chrono::steady_clock;
 	static constexpr Money INITIAL_BALANCE = 10000;
 
 	explicit Economy(bool quiet = true);
 	Economy(const Economy&) = delete;
 	Economy& operator=(const Economy&) = delete;
-	void Run(Mode mode, std::chrono::milliseconds duration, const std::atomic<bool>& stopRequested);
+	void Run(Mode mode, std::chrono::milliseconds duration, const std::atomic<bool>& isStop);
 	void PrintResult() const;
 	void VerifyState() const;
 	[[nodiscard]] unsigned long long GetRunOperationsCount() const;
@@ -29,7 +29,6 @@ public:
 
 private:
 	Bank m_bank{ INITIAL_BALANCE };
-	Logger m_logger;
 	std::vector<std::unique_ptr<Actor>> m_actors;
 
 	unsigned long long m_runOperationsCount = 0;
@@ -37,6 +36,9 @@ private:
 	void CreateActors(bool quiet);
 	[[nodiscard]] Money GetAllCashActorsMoney() const;
 	[[nodiscard]] Money GetAllAccountBalanceMoney() const;
+	static bool ShouldStop(const std::atomic<bool>& isStop, Clock::time_point end);
+	void SingleRun(const std::atomic<bool>& isStop, Clock::time_point end);
+	void ParallelRun(const std::atomic<bool>& isStop, Clock::time_point end);
 };
 
 #endif // ECONOMY_ECONOMY_H

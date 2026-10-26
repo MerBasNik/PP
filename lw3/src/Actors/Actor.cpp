@@ -3,6 +3,8 @@
 //
 
 #include "Actor.h"
+#include <iostream>
+#include <mutex>
 
 Actor::Actor(std::string name)
 	: m_name(std::move(name))
@@ -32,11 +34,6 @@ std::optional<AccountId> Actor::GetAccountId() const
 void Actor::SetAccountId(const AccountId accountId)
 {
 	m_accountId = accountId;
-}
-
-void Actor::SetLogger(Logger* logger)
-{
-	m_logger = logger;
 }
 
 bool Actor::WithdrawToWallet(Bank& bank, const Money amount)
@@ -76,4 +73,19 @@ bool Actor::GiveCash(Actor& recipient, const Money amount)
 	}
 	recipient.m_wallet.Add(amount);
 	return true;
+}
+
+void Actor::SetQuiet(const bool quiet)
+{
+	m_quiet = quiet;
+}
+
+void Actor::Print(const std::string& message) const
+{
+	if (m_quiet)
+	{
+		return;
+	}
+	std::string text = m_name + ": " + message + '\n';
+	std::cout << text;
 }

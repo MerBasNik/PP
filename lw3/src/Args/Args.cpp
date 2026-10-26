@@ -1,37 +1,37 @@
 #include "Args.h"
-#include <charconv>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 
-constexpr std::string_view USAGE = "bank --mode <single|parallel> --seconds <N> [--quiet]";
-
-[[noreturn]] static void ThrowUsage(const std::string& reason)
+static Mode ParseMode(const std::string& value)
 {
-	throw std::invalid_argument(reason + "\nUsage: " + std::string(USAGE));
-}
-
-static Mode ParseMode(const std::string_view value)
-{
-	if (value == "single")
+	if (value == SINGLE_MODE)
 	{
 		return Mode::Single;
 	}
-	if (value == "parallel")
+	if (value == PARALLEL_MODE)
 	{
 		return Mode::Parallel;
 	}
-	ThrowUsage("unknown mode: " + std::string(value));
+	throw std::invalid_argument("unknown mode: " + std::string(value));
 }
 
-static int ParseSeconds(const std::string_view value)
+static int ParseSeconds(const std::string& value)
 {
+	std::size_t parsedLength = 0;
 	int seconds = 0;
-	const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), seconds);
-	if (error != std::errc{} || end != value.data() + value.size() || seconds <= 0)
+	try
 	{
-		ThrowUsage("seconds must be a positive integer: " + std::string(value));
+		seconds = std::stoi(value, &parsedLength);
+	}
+	catch (const std::logic_error&)
+	{
+		seconds = 0;
+	}
+	if (parsedLength != value.size() || seconds <= 0)
+	{
+		throw std::invalid_argument("seconds must be a positive integer: " + value);
 	}
 	return seconds;
 }
@@ -45,22 +45,22 @@ Args ParseArgs(const int argc, const char* const argv[])
 	for (int i = 1; i < argc; ++i)
 	{
 		const std::string_view arg = argv[i];
-		if (arg == "--quiet")
+		if (arg == PARAM_QUIET)
 		{
 			quiet = true;
 			continue;
 		}
-		if (arg != "--mode" && arg != "--seconds")
+		if (arg != PARAM_MODE && arg != PARAM_SECONDS)
 		{
-			ThrowUsage("unknown argument: " + std::string(arg));
+			throw std::invalid_argument("unknown argument: " + std::string(arg));
 		}
 		if (i + 1 >= argc)
 		{
-			ThrowUsage("missing value for " + std::string(arg));
+			throw std::invalid_argument("missing value for " + std::string(arg));
 		}
 
-		const std::string_view value = argv[++i];
-		if (arg == "--mode")
+		const std::string value = argv[++i];
+		if (arg == PARAM_MODE)
 		{
 			mode = ParseMode(value);
 		}
@@ -72,7 +72,7 @@ Args ParseArgs(const int argc, const char* const argv[])
 
 	if (!mode || !seconds)
 	{
-		ThrowUsage("--mode and --seconds are required");
+		throw std::invalid_argument(PARAM_MODE + " and " + PARAM_SECONDS + " are required");
 	}
 
 	return Args{ *mode, *seconds, quiet };

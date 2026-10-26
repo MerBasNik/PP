@@ -4,6 +4,8 @@
 
 #include "Homer.h"
 
+#include <format>
+
 Homer::Homer(const Money moneyForMarge,
 	const Money electricityBill, const Money moneyForChildren)
 	: Actor("Homer")
@@ -49,11 +51,13 @@ void Homer::PayElectricityBill(Bank& bank)
 	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
 	if (mrBurnsAccountId.has_value() && PayFromAccount(bank, *mrBurnsAccountId, m_electricityBill))
 	{
-		Log("paid electricity bill {}", m_electricityBill);
+		const std::string message = std::format("paid electricity bill {}", m_electricityBill);
+		Print(message);
 	}
 	else
 	{
-		Log("skips turn: can't pay electricity bill {}", m_electricityBill);
+		const std::string message = std::format("skips turn: can't pay electricity bill {}", m_electricityBill);
+		Print(message);
 	}
 }
 
@@ -62,11 +66,13 @@ void Homer::WithdrawFamilyCash(Bank& bank)
 	const Money amount = m_moneyForMarge + m_moneyForChildren;
 	if (WithdrawToWallet(bank, amount))
 	{
-		Log("withdrew {} from account", amount);
+		const std::string message = std::format("withdrew {} from account", amount);
+		Print(message);
 	}
 	else
 	{
-		Log("skips turn: not enough money on account to withdraw {}", amount);
+		const std::string message = std::format("skips turn: not enough money on account to withdraw {}", amount);
+		Print(message);
 	}
 }
 
@@ -85,10 +91,12 @@ void Homer::GiveMoneyTo(Actor* recipient, const Money amount)
 	}
 	if (GiveCash(*recipient, amount))
 	{
-		Log("gave {} to {}", amount, recipient->GetName());
+		const std::string message = std::format("gave {} to {}", amount, recipient->GetName());
+		Print(message);
 	}
 	else
 	{
-		Log("skips turn: not enough cash to give {} to {}", amount, recipient->GetName());
+		const std::string message = std::format("skips turn: not enough cash to give {} to {}", amount, recipient->GetName());
+		Print(message);
 	}
 }

@@ -5,16 +5,12 @@
 #include "Economy.h"
 
 #include "src/Actors/Apu.h"
-#include "src/Actors/Bart.h"
+#include "src/Actors/Customer.h"
 #include "src/Actors/Homer.h"
-#include "src/Actors/Lisa.h"
-#include "src/Actors/Marge.h"
 #include "src/Actors/MrBurns.h"
 #include "src/Bank/BankOperationError.h"
 #include <iostream>
 #include <thread>
-
-using Clock = std::chrono::steady_clock;
 
 constexpr Money BURNS_SALARY = 1500;
 constexpr Money HOMER_MONEY_FOR_MARGE = 500;
@@ -23,7 +19,6 @@ constexpr Money HOMER_MONEY_FOR_CHILDREN = 200;
 constexpr Money MARGE_PURCHASE = 500;
 constexpr Money CHILD_PURCHASE = 100;
 constexpr Money APU_ELECTRICITY_BILL = 700;
-
 constexpr Money BURNS_INITIAL_BALANCE = 5000;
 constexpr Money HOMER_INITIAL_BALANCE = 1000;
 constexpr Money APU_INITIAL_BALANCE = 1000;
@@ -31,9 +26,9 @@ constexpr Money HOMER_INITIAL_CASH = 1000;
 constexpr Money MARGE_INITIAL_CASH = 1000;
 constexpr Money CHILD_INITIAL_CASH = 500;
 
-static bool ShouldStop(const std::atomic<bool>& stopRequested, const Clock::time_point deadline)
+bool Economy::ShouldStop(const std::atomic<bool>& isStop, const Clock::time_point end)
 {
-	return stopRequested || Clock::now() >= deadline;
+	return isStop || Clock::now() >= end;
 }
 
 Economy::Economy(const bool quiet)
@@ -45,9 +40,9 @@ void Economy::CreateActors(const bool quiet)
 {
 	auto mrBurns = std::make_unique<MrBurns>(BURNS_SALARY);
 	auto homer = std::make_unique<Homer>(HOMER_MONEY_FOR_MARGE, HOMER_ELECTRICITY_BILL, HOMER_MONEY_FOR_CHILDREN);
-	auto marge = std::make_unique<Marge>(MARGE_PURCHASE);
-	auto bart = std::make_unique<Bart>(CHILD_PURCHASE);
-	auto lisa = std::make_unique<Lisa>(CHILD_PURCHASE);
+	auto marge = std::make_unique<Customer>("Marge", MARGE_PURCHASE);
+	auto bart = std::make_unique<Customer>("Bart", CHILD_PURCHASE);
+	auto lisa = std::make_unique<Customer>("Lisa", CHILD_PURCHASE);
 	auto apu = std::make_unique<Apu>(APU_ELECTRICITY_BILL);
 
 	mrBurns->SetAccountId(m_bank.OpenAccount());
@@ -81,60 +76,60 @@ void Economy::CreateActors(const bool quiet)
 
 	for (const auto& actor : m_actors)
 	{
-		actor->SetLogger(quiet ? nullptr : &m_logger);
+		actor->SetQuiet(quiet);
 	}
 }
 
-void Economy::Run(const Mode mode, const std::chrono::milliseconds duration, const std::atomic<bool>& stopRequested)
+void Economy::Run(const Mode mode, const std::chrono::milliseconds duration, const std::atomic<bool>& isStop)
 {
 	const auto operationsBefore = m_bank.GetOperationsCount();
 	const auto start = Clock::now();
-	const auto deadline = start + duration;
+	const auto end = start + duration;
 
-	if (mode == Mode::Single)
-	{
-		while (!ShouldStop(stopRequested, deadline))
-		{
-			for (const auto& actor : m_actors)
-			{
-				if (ShouldStop(stopRequested, deadline))
-				{
-					break;
-				}
-				actor->DoAction(m_bank);
-			}
-		}
-	}
-	else
-	{
-		std::vector<std::jthread> threads;
-		threads.reserve(m_actors.size());
-		for (const auto& actor : m_actors)
-		{
-			threads.emplace_back([this, &actor, &stopRequested, deadline] {
-				while (!ShouldStop(stopRequested, deadline))
-				{
-					actor->DoAction(m_bank);
-				}
-			});
-		}
-	}
+	mode == Mode::Single ? SingleRun(isStop, end) : ParallelRun(isStop, end);
 
 	m_runDuration = Clock::now() - start;
 	m_runOperationsCount = m_bank.GetOperationsCount() - operationsBefore;
 }
 
+void Economy::ParallelRun(const std::atomic<bool>& isStop, Clock::time_point end)
+{
+	std::vector<std::jthread> threads;
+	threads.reserve(m_actors.size());
+	for (const auto& actor : m_actors)
+	{
+		threads.emplace_back([this, &actor, &isStop, end] {
+			while (!ShouldStop(isStop, end))
+			{
+				actor->DoAction(m_bank);
+			}
+		});
+	}
+}
+
+void Economy::SingleRun(const std::atomic<bool>& isStop, Clock::time_point end)
+{
+	while (!ShouldStop(isStop, end))
+	{
+		for (const auto& actor : m_actors)
+		{
+			if (ShouldStop(isStop, end))
+			{
+				break;
+			}
+			actor->DoAction(m_bank);
+		}
+	}
+}
+
 void Economy::PrintResult() const
 {
 	const double seconds = m_runDuration.count();
-	const auto operationsPerSecond = seconds > 0 ? static_cast<unsigned long long>(m_runOperationsCount / seconds) : 0;
 	const Money bankCash = m_bank.GetCash();
 	const Money actorsCash = GetAllCashActorsMoney();
 	const Money accountsMoney = GetAllAccountBalanceMoney();
 
-	std::cout << "Duration: " << seconds << " s" << std::endl;
-	std::cout << "Bank operations: " << m_runOperationsCount << std::endl;
-	std::cout << "Operations per second: " << operationsPerSecond << std::endl;
+	std::cout << "Duration: " << seconds << std::endl;
 	std::cout << "Bank cash: " << bankCash << ", all actors cash: " << actorsCash << std::endl;
 	std::cout << "Bank cash + all account balances: " << bankCash + accountsMoney
 			  << ", initial balance: " << INITIAL_BALANCE << std::endl;

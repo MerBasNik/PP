@@ -34,6 +34,7 @@ private:
 	std::unordered_map<AccountId, Money> m_accountBalances;
 	mutable std::atomic<unsigned long long> m_operationsCount{ 0 };
 
+	static void VerifyBank(Money amount);
 	Money& GetBalanceRef(AccountId account);
 	const Money& GetBalanceRef(AccountId account) const;
 	void CountOperation() const;

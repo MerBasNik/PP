@@ -4,6 +4,8 @@
 
 #include "Apu.h"
 
+#include <format>
+
 Apu::Apu(const Money electricityBill)
 	: Actor("Apu")
 	, m_electricityBill(electricityBill)
@@ -27,11 +29,13 @@ void Apu::DepositRevenue(Bank& bank)
 	const Money revenue = GetCash();
 	if (apuAccountId.has_value() && revenue > 0 && DepositFromWallet(bank, *apuAccountId, revenue))
 	{
-		Log("deposited revenue {}", revenue);
+		const std::string message = std::format("deposited revenue {}", revenue);
+		Print(message);
 	}
 	else
 	{
-		Log("skips turn: no revenue to deposit");
+		const std::string message = "skips turn: no revenue to deposit";
+		Print(message);
 	}
 }
 
@@ -44,10 +48,12 @@ void Apu::PayElectricityBill(Bank& bank)
 	const auto mrBurnsAccountId = m_mrBurns->GetAccountId();
 	if (mrBurnsAccountId.has_value() && PayFromAccount(bank, *mrBurnsAccountId, m_electricityBill))
 	{
-		Log("paid electricity bill {}", m_electricityBill);
+		const std::string message = std::format("paid electricity bill {}", m_electricityBill);
+		Print(message);
 	}
 	else
 	{
-		Log("skips turn: can't pay electricity bill {}", m_electricityBill);
+		const std::string message = std::format("skips turn: can't pay electricity bill {}", m_electricityBill);
+		Print(message);
 	}
 }

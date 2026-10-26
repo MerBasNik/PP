@@ -12,9 +12,6 @@ add_library(Economy_lib STATIC
         src/Actors/Actor.cpp
         src/Actors/Customer.cpp
         src/Actors/Homer.cpp
-        src/Actors/Marge.cpp
-        src/Actors/Bart.cpp
-        src/Actors/Lisa.cpp
         src/Actors/Apu.cpp
         src/Actors/MrBurns.cpp
         src/Economy/Economy.cpp
@@ -51,9 +48,7 @@ add_executable(Google_test_run
         tests/args/ArgsTest.cpp
         tests/economy/EconomyTest.cpp
         tests/actors/HomerTest.cpp
-        tests/actors/MargeTest.cpp
-        tests/actors/BartTest.cpp
-        tests/actors/LisaTest.cpp
+        tests/actors/CustomerTest.cpp
         tests/actors/MrBurnsTest.cpp
         tests/actors/ApuTest.cpp
 )

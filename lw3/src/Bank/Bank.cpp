@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-static void ThrowIfNegative(const Money amount)
+void Bank::VerifyBank(const Money amount)
 {
 	if (amount < 0)
 	{
@@ -18,7 +18,7 @@ static void ThrowIfNegative(const Money amount)
 Bank::Bank(const Money cash)
 	: m_cash(cash)
 {
-	ThrowIfNegative(cash);
+	VerifyBank(cash);
 }
 
 AccountId Bank::OpenAccount()
@@ -46,7 +46,7 @@ Money Bank::CloseAccount(const AccountId account)
 void Bank::DepositMoney(const AccountId account, const Money amount)
 {
 	CountOperation();
-	ThrowIfNegative(amount);
+	VerifyBank(amount);
 	std::lock_guard lock(m_mutex);
 
 	Money& balance = GetBalanceRef(account);
@@ -61,7 +61,7 @@ void Bank::DepositMoney(const AccountId account, const Money amount)
 void Bank::WithdrawMoney(const AccountId account, const Money amount)
 {
 	CountOperation();
-	ThrowIfNegative(amount);
+	VerifyBank(amount);
 	std::lock_guard lock(m_mutex);
 
 	Money& balance = GetBalanceRef(account);
@@ -76,7 +76,7 @@ void Bank::WithdrawMoney(const AccountId account, const Money amount)
 bool Bank::TryWithdrawMoney(const AccountId account, const Money amount)
 {
 	CountOperation();
-	ThrowIfNegative(amount);
+	VerifyBank(amount);
 	std::lock_guard lock(m_mutex);
 
 	Money& balance = GetBalanceRef(account);

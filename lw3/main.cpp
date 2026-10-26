@@ -6,12 +6,11 @@
 #include <exception>
 #include <iostream>
 
-static_assert(std::atomic<bool>::is_always_lock_free, "the flag is written from a signal handler");
-static std::atomic<bool> g_stopRequested = false;
+static std::atomic<bool> g_stop = false;
 
-static void OnSigInt(int)
+static void SetStopTrue(int)
 {
-	g_stopRequested = true;
+	g_stop = true;
 }
 
 int main(const int argc, const char* argv[])
@@ -19,10 +18,10 @@ int main(const int argc, const char* argv[])
 	try
 	{
 		const Args args = ParseArgs(argc, argv);
-		std::signal(SIGINT, OnSigInt);
+		std::signal(SIGINT, SetStopTrue);
 
 		Economy economy(args.quiet);
-		economy.Run(args.mode, std::chrono::seconds(args.seconds), g_stopRequested);
+		economy.Run(args.mode, std::chrono::seconds(args.seconds), g_stop);
 		economy.PrintResult();
 		economy.VerifyState();
 		return 0;

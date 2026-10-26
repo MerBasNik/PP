@@ -13,6 +13,8 @@ public:
 private:
 	mutable std::mutex m_mutex;
 	Money m_money = 0;
+
+	static void ValidateWallet(Money amount);
 };
 
 #endif // ECONOMY_WALLET_H

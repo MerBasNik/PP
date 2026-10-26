@@ -1,5 +1,7 @@
 #include "Customer.h"
 
+#include <format>
+
 Customer::Customer(std::string name, const Money purchase)
 	: Actor(std::move(name))
 	, m_purchase(purchase)
@@ -19,10 +21,12 @@ void Customer::DoAction(Bank&)
 	}
 	if (GiveCash(*m_apu, m_purchase))
 	{
-		Log("bought something for {} in the {}'s store", m_purchase, m_apu->GetName());
+		const std::string message = std::format("bought something for {} in the {}'s store", m_purchase, m_apu->GetName());
+		Print(message);
 	}
 	else
 	{
-		Log("skips turn: not enough cash to buy for {}", m_purchase);
+		const std::string message = std::format("skips turn: not enough cash to buy for {}", m_purchase);
+		Print(message);
 	}
 }

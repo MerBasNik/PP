@@ -4,6 +4,8 @@
 
 #include "MrBurns.h"
 
+#include <format>
+
 MrBurns::MrBurns(const Money salary)
 	: Actor("MrBurns")
 	, m_salary(salary)
@@ -22,11 +24,13 @@ void MrBurns::DoAction(Bank& bank)
 		const auto employeeAccountId = employee->GetAccountId();
 		if (employeeAccountId.has_value() && PayFromAccount(bank, *employeeAccountId, m_salary))
 		{
-			Log("paid salary {} to {}", m_salary, employee->GetName());
+			const std::string message = std::format("paid salary {} to {}", m_salary, employee->GetName());
+			Print(message);
 		}
 		else
 		{
-			Log("skips turn: can't pay salary {} to {}", m_salary, employee->GetName());
+			const std::string message = std::format("skips turn: can't pay salary {} to {}", m_salary, employee->GetName());
+			Print(message);
 		}
 	}
 }

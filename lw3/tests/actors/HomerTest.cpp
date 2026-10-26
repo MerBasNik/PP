@@ -2,10 +2,8 @@
 // Created by Вадим Патрушев on 24.03.2026.
 //
 
-#include "src/Actors/Bart.h"
+#include "src/Actors/Customer.h"
 #include "src/Actors/Homer.h"
-#include "src/Actors/Lisa.h"
-#include "src/Actors/Marge.h"
 #include "src/Actors/MrBurns.h"
 #include "src/Bank/Bank.h"
 #include <gtest/gtest.h>
@@ -28,9 +26,9 @@ protected:
 
 	Bank m_bank{ 10000 };
 	Homer m_homer{ 500, 200, 300 };
-	Marge m_marge{ 1500 };
-	Bart m_bart{ 400 };
-	Lisa m_lisa{ 400 };
+	Customer m_marge{ "Marge", 1500 };
+	Customer m_bart{ "Bart", 400 };
+	Customer m_lisa{ "Lisa", 400 };
 	MrBurns m_mrBurns{ 5000 };
 };
 

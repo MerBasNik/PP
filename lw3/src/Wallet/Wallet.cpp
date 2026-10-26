@@ -1,7 +1,7 @@
 #include "Wallet.h"
 #include <stdexcept>
 
-static void ThrowIfNegative(const Money amount)
+void Wallet::ValidateWallet(const Money amount)
 {
 	if (amount < 0)
 	{
@@ -11,14 +11,14 @@ static void ThrowIfNegative(const Money amount)
 
 void Wallet::Add(const Money amount)
 {
-	ThrowIfNegative(amount);
+	ValidateWallet(amount);
 	std::lock_guard lock(m_mutex);
 	m_money += amount;
 }
 
 bool Wallet::TrySpend(const Money amount)
 {
-	ThrowIfNegative(amount);
+	ValidateWallet(amount);
 	std::lock_guard lock(m_mutex);
 	if (m_money < amount)
 	{
